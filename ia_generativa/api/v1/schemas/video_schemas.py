@@ -193,5 +193,113 @@ class VideoAnalysisRequest(BaseModel):
     
 class VideoMontageRequest(BaseModel):
     """Requisição para criação de montagem de vídeos."""
-    videos: List[str] = Field(..., description="Lista de vídeos em formato base64")
+        videos: List[str] = Field(..., description="Lista de vídeos em formato base64")
     format: VideoFormat = Field(VideoFormat.MP4, description="Formato dos vídeos")
+    layout: str = Field("grid", description="Tipo de layout (grid, horizontal, vertical)")
+    grid_size: Optional[Tuple[int, int]] = Field(None, description="Tamanho da grade (rows, cols)")
+    output_size: Optional[Tuple[int, int]] = Field(None, description="Tamanho do vídeo de saída (width, height)")
+    include_audio: bool = Field(True, description="Se True, inclui áudio do primeiro vídeo")
+    output_format: VideoFormat = Field(VideoFormat.MP4, description="Formato do vídeo de saída")
+    
+    @validator('videos')
+    def validate_videos(cls, v):
+        """Valida que há pelo menos um vídeo."""
+        if not v:
+            raise ValueError("É necessário fornecer pelo menos um vídeo")
+        return v
+    
+    @validator('layout')
+    def validate_layout(cls, v):
+        """Valida que o layout é válido."""
+        if v not in ["grid", "horizontal", "vertical"]:
+            raise ValueError("Layout deve ser 'grid', 'horizontal' ou 'vertical'")
+        return v
+    
+class VideoExtractAudioRequest(BaseModel):
+    """Requisição para extração de áudio de um vídeo."""
+    video: str = Field(..., description="Vídeo em formato base64")
+    format: VideoFormat = Field(VideoFormat.MP4, description="Formato do vídeo")
+    output_format: str = Field("mp3", description="Formato do áudio de saída")
+    start_time: Optional[float] = Field(None, description="Tempo inicial para extração (segundos)")
+    end_time: Optional[float] = Field(None, description="Tempo final para extração (segundos)")
+    
+    @validator('output_format')
+    def validate_output_format(cls, v):
+        """Valida que o formato de saída é válido."""
+        if v.lower() not in ["mp3", "wav", "ogg", "aac"]:
+            raise ValueError("Formato de saída deve ser 'mp3', 'wav', 'ogg' ou 'aac'")
+        return v.lower()
+    
+class VideoExtractSceneRequest(BaseModel):
+    """Requisição para detecção de cenas em um vídeo."""
+    video: str = Field(..., description="Vídeo em formato base64")
+    format: VideoFormat = Field(VideoFormat.MP4, description="Formato do vídeo")
+    threshold: float = Field(30.0, description="Limiar de diferença para detectar transição")
+    min_scene_length: float = Field(1.0, description="Duração mínima de uma cena em segundos")
+    
+class VideoSpeedChangeRequest(BaseModel):
+    """Requisição para alteração de velocidade de um vídeo."""
+    video: str = Field(..., description="Vídeo em formato base64")
+    format: VideoFormat = Field(VideoFormat.MP4, description="Formato do vídeo")
+    speed_factor: float = Field(..., description="Fator de velocidade (>1 para acelerar, <1 para desacelerar)")
+    preserve_audio_pitch: bool = Field(True, description="Se True, preserva o tom do áudio")
+    output_format: VideoFormat = Field(VideoFormat.MP4, description="Formato do vídeo de saída")
+    
+    @validator('speed_factor')
+    def validate_speed_factor(cls, v):
+        """Valida que o fator de velocidade é positivo."""
+        if v <= 0:
+            raise ValueError("speed_factor deve ser positivo")
+        return v
+    
+class VideoTimelapseRequest(BaseModel):
+    """Requisição para criação de timelapse."""
+    video: str = Field(..., description="Vídeo em formato base64")
+    format: VideoFormat = Field(VideoFormat.MP4, description="Formato do vídeo")
+    speed_factor: float = Field(10.0, description="Fator de aceleração do timelapse")
+    frame_interval: int = Field(1, description="Intervalo de frames a considerar")
+    output_format: VideoFormat = Field(VideoFormat.MP4, description="Formato do vídeo de saída")
+    
+    @validator('speed_factor')
+    def validate_speed_factor(cls, v):
+        """Valida que o fator de velocidade é positivo."""
+        if v <= 0:
+            raise ValueError("speed_factor deve ser positivo")
+        return v
+    
+    @validator('frame_interval')
+    def validate_frame_interval(cls, v):
+        """Valida que o intervalo de frames é positivo."""
+        if v <= 0:
+            raise ValueError("frame_interval deve ser positivo")
+        return v
+    
+class VideoResponse(BaseModel):
+    """Resposta contendo um vídeo processado."""
+    video: str = Field(..., description="Vídeo processado em formato base64")
+    format: str = Field(..., description="Formato do vídeo")
+    duration: float = Field(..., description="Duração do vídeo em segundos")
+    width: int = Field(..., description="Largura do vídeo em pixels")
+    height: int = Field(..., description="Altura do vídeo em pixels")
+    fps: float = Field(..., description="Frames por segundo")
+    processing_time: float = Field(..., description="Tempo de processamento em segundos")
+    
+class AudioResponse(BaseModel):
+    """Resposta contendo áudio extraído de um vídeo."""
+    audio: str = Field(..., description="Áudio extraído em formato base64")
+    format: str = Field(..., description="Formato do áudio")
+    duration: float = Field(..., description="Duração do áudio em segundos")
+    
+class VideoAnalysisResponse(BaseModel):
+    """Resposta contendo análise de vídeo."""
+    video_info: Dict[str, Any] = Field(..., description="Informações básicas do vídeo")
+    content_classification: Optional[List[Dict[str, Any]]] = Field(None, description="Classificação de conteúdo")
+    object_detection: Optional[Dict[str, Any]] = Field(None, description="Detecção de objetos")
+    video_description: Optional[str] = Field(None, description="Descrição geral do vídeo")
+    processing_time: float = Field(..., description="Tempo de processamento em segundos")
+    
+class SceneDetectionResponse(BaseModel):
+    """Resposta contendo transições de cena detectadas."""
+    scenes: List[Dict[str, Any]] = Field(..., description="Lista de cenas detectadas")
+    duration: float = Field(..., description="Duração do vídeo em segundos")
+    total_scenes: int = Field(..., description="Número total de cenas detectadas")
