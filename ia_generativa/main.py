@@ -13,6 +13,7 @@ from api.v1.endpoints.image_endpoints import router as image_router
 from api.v1.endpoints.audio_endpoints import router as audio_router
 from api.v1.endpoints.video_endpoints import router as video_router
 from api.v1.endpoints.orchestrator_endpoints import router as orchestrator_router
+from api.v1.endpoints.tasks_endpoints import router as tasks_router
 
 # Configurar logging
 logging.basicConfig(
@@ -74,6 +75,7 @@ app.include_router(image_router)
 app.include_router(audio_router)
 app.include_router(video_router)
 app.include_router(orchestrator_router)
+app.include_router(tasks_router)
 
 # Rota raiz
 @app.get("/")
