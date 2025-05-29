@@ -8,6 +8,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import uvicorn
+from api.v1.endpoints.text_endpoints import router as text_router
+from api.v1.endpoints.image_endpoints import router as image_router
 
 # Configurar logging
 logging.basicConfig(
@@ -65,6 +67,8 @@ async def log_requests(request: Request, call_next):
 
 # Incluir routers
 app.include_router(text_router)
+app.include_router(text_router)
+app.include_router(image_router)
 
 # Rota raiz
 @app.get("/")
